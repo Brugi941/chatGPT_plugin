@@ -40,8 +40,8 @@ async def get_gatti():
     response = requests.get(api_url)
     gatti = []
     for record in response.json():
-
         gatti.append(gatto.fromJson(jsonRow=record))
+    gatti.append(gatto(id=123,name="Anna", origin="Mestre", temperament="arrabbiotto", description="Il gatto più arrabbiotto"))
     return gatti
     #return ListaGatti(gatti=gatti)
 
