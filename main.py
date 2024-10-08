@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, HTTPException
 from typing import List, Optional
 from pydantic import BaseModel
 from datetime import date
@@ -99,9 +99,14 @@ generate_invoices_from_orders(invoices_per_order=1)
 # 1. API to return all orders, filterable by customer (company_name)
 @app.get("/orders", response_model=List[Order])
 def get_orders(company_name: Optional[str] = None):
+    filtered_orders = orders
     if company_name:
-        return [order for order in orders if company_name.lower() in order.company_name.lower()]
-    return orders
+        filtered_orders = [order for order in orders if company_name.lower() in order.company_name.lower()]
+    
+    if not filtered_orders:
+        raise HTTPException(status_code=404, detail="No orders found")
+    
+    return filtered_orders
 
 # 2. API to return all order line items, filterable by customer, article, and order_id
 @app.get("/order-lines", response_model=List[LineItemOrder])
@@ -116,12 +121,15 @@ def get_order_lines(
         filtered_orders = [order for order in orders if company_name.lower() in order.company_name.lower()]
     if order_id:
         filtered_orders = [order for order in filtered_orders if order.order_id == order_id]
-    if order_id:
-        filtered_orders = [order for order in filtered_orders if order.order_id == order_id]
+    
     for order in filtered_orders:
         for line_item in order.line_items:
             if article is None or line_item.article == article:
                 order_lines.append(line_item)
+    
+    if not order_lines:
+        raise HTTPException(status_code=404, detail="No order lines found")
+    
     return order_lines
 
 # 3. API to return all invoices, filterable by customer, date, and if expired (scaduto)
@@ -139,9 +147,13 @@ def get_invoices(
         filtered_invoices = [invoice for invoice in filtered_invoices if invoice.invoice_date == invoice_date]
     if invoice_id:
         filtered_invoices = [invoice for invoice in filtered_invoices if invoice.invoice_id == invoice_id]
-        
+    
     if scaduto is not None:
         filtered_invoices = [invoice for invoice in filtered_invoices if invoice.scaduto == scaduto]
+    
+    if not filtered_invoices:
+        raise HTTPException(status_code=404, detail="No invoices found")
+    
     return filtered_invoices
 
 # 4. API to return all invoice line items, filterable by customer, article, order_id, and invoice_id
@@ -163,4 +175,8 @@ def get_invoice_lines(
         for line_item in invoice.line_items:
             if (article is None or line_item.article == article) and (order_id is None or line_item.order_reference.article == order_id):
                 invoice_lines.append(line_item)
+    
+    if not invoice_lines:
+        raise HTTPException(status_code=404, detail="No invoice lines found")
+    
     return invoice_lines
