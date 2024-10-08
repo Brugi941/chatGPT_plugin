@@ -116,7 +116,8 @@ def get_order_lines(
         filtered_orders = [order for order in orders if company_name.lower() in order.company_name.lower()]
     if order_id:
         filtered_orders = [order for order in filtered_orders if order.order_id == order_id]
-
+    if order_id:
+        filtered_orders = [order for order in filtered_orders if order.order_id == order_id]
     for order in filtered_orders:
         for line_item in order.line_items:
             if article is None or line_item.article == article:
@@ -128,13 +129,17 @@ def get_order_lines(
 def get_invoices(
     company_name: Optional[str] = None,
     invoice_date: Optional[date] = None,
-    scaduto: Optional[bool] = None
+    scaduto: Optional[bool] = None,
+    invoice_id: Optional[int] = None
 ):
     filtered_invoices = invoices
     if company_name:
         filtered_invoices = [invoice for invoice in invoices if company_name.lower() in invoice.company_name.lower()]
     if invoice_date:
         filtered_invoices = [invoice for invoice in filtered_invoices if invoice.invoice_date == invoice_date]
+    if invoice_date:
+        filtered_invoices = [invoice for invoice in filtered_invoices if invoice.invoice_id == invoice_id]
+        
     if scaduto is not None:
         filtered_invoices = [invoice for invoice in filtered_invoices if invoice.scaduto == scaduto]
     return filtered_invoices
