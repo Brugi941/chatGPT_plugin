@@ -137,7 +137,7 @@ def get_invoices(
         filtered_invoices = [invoice for invoice in invoices if company_name.lower() in invoice.company_name.lower()]
     if invoice_date:
         filtered_invoices = [invoice for invoice in filtered_invoices if invoice.invoice_date == invoice_date]
-    if invoice_date:
+    if invoice_id:
         filtered_invoices = [invoice for invoice in filtered_invoices if invoice.invoice_id == invoice_id]
         
     if scaduto is not None:
