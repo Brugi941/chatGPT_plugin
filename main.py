@@ -103,87 +103,13 @@ def generate_invoices_from_orders(invoices_per_order: int):
 generate_orders(num_companies=10, orders_per_company=5)
 generate_invoices_from_orders(invoices_per_order=1)
 
-# 1. API to return all orders, filterable by customer (company_name)
+# 1. API to return all orders
 @app.get("/orders", response_model=List[Order])
-def get_orders(company_name: Optional[str] = None):
-    filtered_orders = orders
-    if company_name:
-        filtered_orders = [order for order in orders if company_name.lower() in order.company_name.lower()]
-    
-    if not filtered_orders:
-        raise HTTPException(status_code=404, detail="No orders found")
-    
-    return filtered_orders
+def get_orders():  
+    return orders
 
-# 2. API to return all order line items, filterable by customer, article, and order_id
-@app.get("/order-lines", response_model=List[LineItemOrder])
-def get_order_lines(
-    company_name: Optional[str] = None,
-    article: Optional[int] = None,
-    order_id: Optional[int] = None
-):
-    order_lines = []
-    filtered_orders = orders
-    if company_name:
-        filtered_orders = [order for order in orders if company_name.lower() in order.company_name.lower()]
-    if order_id:
-        filtered_orders = [order for order in filtered_orders if order.order_id == order_id]
-    
-    for order in filtered_orders:
-        for line_item in order.line_items:
-            if article is None or line_item.article == article:
-                order_lines.append(line_item)
-    
-    if not order_lines:
-        raise HTTPException(status_code=404, detail="No order lines found")
-    
-    return order_lines
-
-# 3. API to return all invoices, filterable by customer, date, and if expired (scaduto)
+# 3. API to return all invoices
 @app.get("/invoices", response_model=List[Invoice])
-def get_invoices(
-    company_name: Optional[str] = None,
-    invoice_date: Optional[date] = None,
-    scaduto: Optional[bool] = None,
-    invoice_id: Optional[int] = None
-):
-    filtered_invoices = invoices
-    if company_name:
-        filtered_invoices = [invoice for invoice in invoices if company_name.lower() in invoice.company_name.lower()]
-    if invoice_date:
-        filtered_invoices = [invoice for invoice in filtered_invoices if invoice.invoice_date == invoice_date]
-    if invoice_id:
-        filtered_invoices = [invoice for invoice in filtered_invoices if invoice.invoice_id == invoice_id]
-    
-    if scaduto is not None:
-        filtered_invoices = [invoice for invoice in filtered_invoices if invoice.scaduto == scaduto]
-    
-    if not filtered_invoices:
-        raise HTTPException(status_code=404, detail="No invoices found")
-    
+def get_invoices():
+    filtered_invoices = invoices    
     return filtered_invoices
-
-# 4. API to return all invoice line items, filterable by customer, article, order_id, and invoice_id
-@app.get("/invoice-lines", response_model=List[LineItemInvoice])
-def get_invoice_lines(
-    company_name: Optional[str] = None,
-    article: Optional[int] = None,
-    order_id: Optional[int] = None,
-    invoice_id: Optional[int] = None
-):
-    invoice_lines = []
-    filtered_invoices = invoices
-    if company_name:
-        filtered_invoices = [invoice for invoice in invoices if company_name.lower() in invoice.company_name.lower()]
-    if invoice_id:
-        filtered_invoices = [invoice for invoice in filtered_invoices if invoice.invoice_id == invoice_id]
-
-    for invoice in filtered_invoices:
-        for line_item in invoice.line_items:
-            if (article is None or line_item.article == article) and (order_id is None or line_item.order_reference.article == order_id):
-                invoice_lines.append(line_item)
-    
-    if not invoice_lines:
-        raise HTTPException(status_code=404, detail="No invoice lines found")
-    
-    return invoice_lines
