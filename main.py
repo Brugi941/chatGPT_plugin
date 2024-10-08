@@ -4,10 +4,17 @@ from pydantic import BaseModel
 from datetime import date
 import random
 from faker import Faker
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 fake = Faker('it_IT')
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://chat.openai.com"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # Define LineItemOrder and LineItemInvoice
 class LineItemOrder(BaseModel):
     article: int
