@@ -59,7 +59,7 @@ def generate_orders(num_companies: int, orders_per_company: int):
             order = Order(
                 order_id=order_id,
                 company_name=company_name,
-                total_order=sum(c.price for c in righe),
+                total_order=sum(c.price*c.quantity for c in righe),
                 order_date=fake.date_between(start_date='-1y', end_date='today'),
                 shipping_address=fake.address().replace("\n", ", "),
                 line_items=righe
@@ -83,7 +83,7 @@ def generate_invoices_from_orders(invoices_per_order: int):
             invoice = Invoice(
                 invoice_id=invoice_id,
                 company_name=order.company_name,
-                total_amount=sum(c.price for c in righe),
+                total_amount=sum(c.price*c.quantity for c in righe),
                 invoice_date=fake.date_between(start_date=order.order_date, end_date='+30d'),
                 shipping_address=order.shipping_address,
                 scaduto=scaduto,
