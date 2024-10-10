@@ -1,13 +1,15 @@
-from fastapi import FastAPI, Query, HTTPException
+from fastapi import FastAPI, Query, HTTPException, Depends
 from typing import List, Optional
 from pydantic import BaseModel
 from datetime import date
 import random
 from faker import Faker
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security.api_key import APIKeyHeader
 
 app = FastAPI()
 fake = Faker('it_IT')
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["https://chat.openai.com"],
@@ -15,6 +17,18 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+API_KEY = "mysecretapikey"  # La tua API Key segreta
+API_KEY_NAME = "X-API-Key"  # Nome dell'header da utilizzare per l'API Key
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
+
+# Funzione per verificare l'API Key
+async def get_api_key(api_key: str = Depends(api_key_header)):
+    if api_key == API_KEY:
+        return api_key
+    else:
+        raise HTTPException(status_code=403, detail="Could not validate credentials")
+
 # Define LineItemOrder and LineItemInvoice
 class LineItemOrder(BaseModel):
     article: int
@@ -63,6 +77,7 @@ def generate_orders(num_companies: int, orders_per_company: int):
                     price=round(random.uniform(10, 200), 2),
                     requested_delivery_date=fake.date_between(start_date='today', end_date='+90d')
                 ) for _ in range(random.randint(2, 10))]
+
             order = Order(
                 order_id=order_id,
                 company_name=company_name,
@@ -87,6 +102,7 @@ def generate_invoices_from_orders(invoices_per_order: int):
                     requested_delivery_date=item.requested_delivery_date,
                     order_reference=item
                 ) for item in order.line_items]
+
             invoice = Invoice(
                 invoice_id=invoice_id,
                 company_name=order.company_name,
@@ -103,13 +119,12 @@ def generate_invoices_from_orders(invoices_per_order: int):
 generate_orders(num_companies=10, orders_per_company=5)
 generate_invoices_from_orders(invoices_per_order=1)
 
-# 1. API to return all orders
+# 1. API to return all orders, protected by API key
 @app.get("/orders", response_model=List[Order])
-def get_orders():  
+def get_orders(api_key: str = Depends(get_api_key)):  
     return orders
 
-# 3. API to return all invoices
+# 3. API to return all invoices, protected by API key
 @app.get("/invoices", response_model=List[Invoice])
-def get_invoices():
-    filtered_invoices = invoices    
-    return filtered_invoices
+def get_invoices(api_key: str = Depends(get_api_key)):
+    return invoices
